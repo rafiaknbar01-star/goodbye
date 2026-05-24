@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A Farewell, Not Goodbye</title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&family=Playfair+Display:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =============================================
+       CSS VARIABLES & RESET
+    ============================================= */
+    :root {
+      --black:       #0a0a0f;
+      --deep-navy:   #0d1b2a;
+      --navy:        #1b2d45;
+      --gold:        #c9a96e;
+      --gold-light:  #e8d5b0;
+      --white:       #f5f0ea;
+      --white-dim:   rgba(245, 240, 234, 0.75);
+      --white-faint: rgba(245, 240, 234, 0.35);
+      --glass:       rgba(255, 255, 255, 0.04);
+      --glass-border:rgba(201, 169, 110, 0.18);
+      --shadow:      0 8px 40px rgba(0,0,0,0.55);
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--black);
+      color: var(--white);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      overflow-x: hidden;
+      cursor: default;
+    }
+
+    /* =============================================
+       GRAIN OVERLAY (texture)
+    ============================================= */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.35;
+    }
+
+    /* =============================================
+       MUSIC BUTTON (floating)
+    ============================================= */
+    #music-btn {
+      position: fixed;
+      bottom: 32px;
+      right: 32px;
+      z-index: 1000;
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      border: 1px solid var(--glass-border);
+      background: rgba(13, 27, 42, 0.75);
+      backdrop-filter: blur(16px);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-size: 20px;
+      transition: transform 0.3s, box-shadow 0.3s, background 0.3s;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    #music-btn:hover {
+      transform: scale(1.1);
+      background: rgba(201,169,110,0.15);
+      box-shadow: 0 6px 30px rgba(201,169,110,0.2);
+    }
+    #music-btn .icon { transition: opacity 0.2s; }
+
+    /* Vinyl spin animation when playing */
+    #music-btn.playing .icon { animation: spin 3s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* =============================================
+       HERO SECTION
+    ============================================= */
+    #hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 80px 24px 100px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Multi-layer gradient background */
+    #hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 50% 0%,   #1b2d45 0%, transparent 70%),
+        radial-gradient(ellipse 50% 40% at 80% 80%,  #0d1b2a 0%, transparent 60%),
+        radial-gradient(ellipse 60% 50% at 10% 60%,  #0a0a0f 0%, transparent 70%),
+        linear-gradient(180deg, #0d1b2a 0%, #0a0a0f 100%);
+      z-index: 0;
+    }
+
+    /* Soft golden orb */
+    #hero::after {
+      content: '';
+      position: absolute;
+      top: -120px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(201,169,110,0.10) 0%, transparent 70%);
+      z-index: 0;
+      animation: breathe 6s ease-in-out infinite;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: translateX(-50%) scale(1);   opacity: 0.7; }
+      50%        { transform: translateX(-50%) scale(1.15); opacity: 1;   }
+    }
+
+    #hero > * { position: relative; z-index: 1; }
+
+    .hero-label {
+      font-family: 'DM Sans', sans-serif;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 28px;
+      opacity: 0;
+      animation: fadeUp 1s ease forwards 0.4s;
+    }
+
+    .hero-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(48px, 9vw, 96px);
+      font-weight: 300;
+      line-height: 1.05;
+      color: var(--white);
+      margin-bottom: 24px;
+      opacity: 0;
+      animation: fadeUp 1.2s ease forwards 0.7s;
+    }
+
+    .hero-title em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .hero-subtitle {
+      font-size: clamp(14px, 2vw, 17px);
+      font-weight: 300;
+      color: var(--white-dim);
+      letter-spacing: 0.04em;
+      max-width: 480px;
+      line-height: 1.75;
+      margin-bottom: 52px;
+      opacity: 0;
+      animation: fadeUp 1.2s ease forwards 1s;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 36px;
+      border: 1px solid var(--glass-border);
+      border-radius: 50px;
+      background: rgba(201,169,110,0.08);
+      backdrop-filter: blur(12px);
+      color: var(--gold-light);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 13px;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-decoration: none;
+      text-transform: uppercase;
+      cursor: pointer;
+      opacity: 0;
+      animation: fadeUp 1.2s ease forwards 1.3s;
+      transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+    }
+
+    .hero-cta:hover {
+      background: rgba(201,169,110,0.16);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(201,169,110,0.15);
+    }
+
+    .hero-cta svg { width: 16px; height: 16px; }
+
+    /* scroll indicator */
+    .scroll-line {
+      position: absolute;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      animation: fadeUp 1s ease forwards 1.8s;
+    }
+    .scroll-line span {
+      font-size: 9px;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--white-faint);
+    }
+    .scroll-line .line {
+      width: 1px;
+      height: 40px;
+      background: linear-gradient(to bottom, var(--gold), transparent);
+      animation: drip 2s ease-in-out infinite;
+    }
+    @keyframes drip {
+      0%   { transform: scaleY(0); transform-origin: top; }
+      50%  { transform: scaleY(1); transform-origin: top; }
+      51%  { transform: scaleY(1); transform-origin: bottom; }
+      100% { transform: scaleY(0); transform-origin: bottom; }
+    }
+
+    /* =============================================
+       STORY SECTION  (teks muncul satu per satu)
+    ============================================= */
+    #story {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 100px 28px 80px;
+      text-align: center;
+    }
+
+    .story-line {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(22px, 3.5vw, 34px);
+      font-weight: 300;
+      line-height: 1.55;
+      color: var(--white-dim);
+      margin-bottom: 48px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+    }
+
+    .story-line.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .story-line em {
+      font-style: italic;
+      color: var(--gold);
+    }
+
+    .story-line.large {
+      font-size: clamp(28px, 4.5vw, 46px);
+      font-weight: 300;
+      color: var(--white);
+    }
+
+    /* Divider */
+    .gold-divider {
+      width: 60px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      margin: 0 auto 80px;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+    .gold-divider.visible { opacity: 1; }
+
+    /* =============================================
+       QUOTES SECTION
+    ============================================= */
+    #quotes {
+      padding: 60px 24px 100px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .quote-card {
+      max-width: 600px;
+      width: 100%;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      border-radius: 20px;
+      padding: 36px 40px;
+      backdrop-filter: blur(12px);
+      text-align: center;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .quote-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .quote-mark {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 72px;
+      line-height: 0.5;
+      color: var(--gold);
+      opacity: 0.3;
+      display: block;
+      margin-bottom: 16px;
+    }
+
+    .quote-text {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(16px, 2.2vw, 20px);
+      font-style: italic;
+      font-weight: 400;
+      color: var(--white);
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .quote-author {
+      font-size: 12px;
+      font-weight: 500;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+    }
+
+    /* =============================================
+       GALLERY SECTION
+    ============================================= */
+    #gallery {
+      padding: 60px 24px 100px;
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      text-align: center;
+      margin-bottom: 60px;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .section-label.visible { opacity: 1; transform: translateY(0); }
+
+    .section-label h2 {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(32px, 5vw, 52px);
+      font-weight: 300;
+      color: var(--white);
+      margin-bottom: 12px;
+    }
+
+    .section-label p {
+      font-size: 14px;
+      color: var(--white-faint);
+      letter-spacing: 0.06em;
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    @media (max-width: 700px) {
+      .gallery-grid { grid-template-columns: 1fr 1fr; gap: 14px; }
+    }
+    @media (max-width: 440px) {
+      .gallery-grid { grid-template-columns: 1fr; }
+    }
+
+    .gallery-card {
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      aspect-ratio: 4/3;
+      background: var(--navy);
+      border: 1px solid var(--glass-border);
+      opacity: 0;
+      transform: translateY(50px) scale(0.97);
+      transition: opacity 0.8s ease, transform 0.8s ease, box-shadow 0.4s;
+      cursor: pointer;
+    }
+
+    .gallery-card.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    .gallery-card:hover {
+      box-shadow: 0 16px 50px rgba(201,169,110,0.15);
+      transform: translateY(-4px) scale(1.02);
+    }
+
+    .gallery-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s ease;
+      display: block;
+    }
+
+    .gallery-card:hover img {
+      transform: scale(1.07);
+    }
+
+    /* Overlay gradient on card */
+    .gallery-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .card-caption {
+      position: absolute;
+      bottom: 14px;
+      left: 16px;
+      right: 16px;
+      z-index: 2;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.06em;
+      color: var(--gold-light);
+      opacity: 0;
+      transform: translateY(6px);
+      transition: opacity 0.3s, transform 0.3s;
+    }
+
+    .gallery-card:hover .card-caption {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* =============================================
+       FINAL MESSAGE SECTION
+    ============================================= */
+    #finale {
+      padding: 80px 28px 120px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #finale::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 50% at 50% 50%, rgba(201,169,110,0.06) 0%, transparent 70%),
+        linear-gradient(180deg, transparent, #0d1b2a 40%, transparent);
+      pointer-events: none;
+    }
+
+    .finale-content { position: relative; z-index: 1; max-width: 640px; margin: 0 auto; }
+
+    .finale-icon {
+      font-size: 40px;
+      margin-bottom: 32px;
+      opacity: 0;
+      transform: scale(0.7);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+    .finale-icon.visible { opacity: 1; transform: scale(1); }
+
+    .finale-heading {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(36px, 6vw, 64px);
+      font-weight: 300;
+      color: var(--white);
+      line-height: 1.2;
+      margin-bottom: 28px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.9s ease 0.15s, transform 0.9s ease 0.15s;
+    }
+    .finale-heading.visible { opacity: 1; transform: translateY(0); }
+    .finale-heading em { color: var(--gold); font-style: italic; }
+
+    .finale-body {
+      font-size: clamp(15px, 2vw, 18px);
+      color: var(--white-dim);
+      line-height: 1.85;
+      margin-bottom: 52px;
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.9s ease 0.3s, transform 0.9s ease 0.3s;
+    }
+    .finale-body.visible { opacity: 1; transform: translateY(0); }
+
+    .finale-sig {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(20px, 3vw, 28px);
+      font-style: italic;
+      color: var(--gold);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.9s ease 0.45s, transform 0.9s ease 0.45s;
+    }
+    .finale-sig.visible { opacity: 1; transform: translateY(0); }
+
+    /* Gold stars row */
+    .star-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin: 40px 0;
+      opacity: 0;
+      transition: opacity 1s ease 0.6s;
+    }
+    .star-row.visible { opacity: 1; }
+    .star-row span { color: var(--gold); font-size: 18px; }
+
+    /* =============================================
+       FOOTER
+    ============================================= */
+    footer {
+      text-align: center;
+      padding: 32px 24px 48px;
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--white-faint);
+      border-top: 1px solid rgba(201,169,110,0.08);
+    }
+
+    /* =============================================
+       KEYFRAMES
+    ============================================= */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =============================================
+       SCROLLBAR STYLING
+    ============================================= */
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--black); }
+    ::-webkit-scrollbar-thumb { background: var(--glass-border); border-radius: 2px; }
+
+    /* =============================================
+       SECTION SEPARATOR
+    ============================================= */
+    .sep {
+      width: 100%;
+      max-width: 200px;
+      margin: 0 auto 80px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .sep-line { flex: 1; height: 1px; background: var(--glass-border); }
+    .sep-dot { width: 4px; height: 4px; border-radius: 50%; background: var(--gold); }
+
+    /* =============================================
+       RESPONSIVE ADJUSTMENTS
+    ============================================= */
+    @media (max-width: 480px) {
+      #music-btn { bottom: 20px; right: 20px; width: 46px; height: 46px; }
+      .quote-card { padding: 28px 24px; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- =============================================
+     AUDIO (background music - instrumental)
+============================================= -->
+<audio id="bg-audio" loop preload="none">
+  <!--
+    Gunakan file musik lokal atau URL streaming.
+    Contoh: sumber musik bebas royalti dari Pixabay/Free Music Archive
+    Ganti src dengan URL musik instrumental Anda.
+  -->
+  <source src="Keane - Somewhere Only We Know (Lyrics).mp3" type="audio/mpeg" />
+</audio>
+
+<!-- Music toggle button -->
+<button id="music-btn" aria-label="Toggle Music" title="Putar / Hentikan Musik">
+  <span class="icon" id="music-icon">♪</span>
+</button>
+
+
+<!-- =============================================
+     HERO SECTION
+============================================= -->
+<section id="hero">
+  <p class="hero-label">✦ Sebuah Perpisahan yang Penuh Makna ✦</p>
+
+  <h1 class="hero-title">
+    A Farewell,<br /><em>Not Goodbye</em>
+  </h1>
+
+  <p class="hero-subtitle">
+    Terima kasih untuk perjalanan yang luar biasa.<br />
+    Setiap momen bersama kalian adalah kenangan yang tak tergantikan.
+  </p>
+
+  <a class="hero-cta" href="#story">
+    Lihat Kenangan
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M12 5v14M5 12l7 7 7-7"/>
+    </svg>
+  </a>
+
+  <div class="scroll-line">
+    <span>Scroll</span>
+    <div class="line"></div>
+  </div>
+</section>
+
+
+<!-- =============================================
+     STORY SECTION
+============================================= -->
+<section id="story">
+
+  <p class="story-line large">
+    "Terima kasih untuk semua kenangan dan kebersamaan selama bekerja yang telah kita lalui..."
+  </p>
+
+  <p class="story-line">
+    Banyak hal telah kita lewati — tantangan yang membentuk kita,
+    tawa yang menghangatkan hari, dan kebersamaan yang membuatnya
+    <em>berarti.</em>
+  </p>
+
+  <p class="story-line">
+    Setiap siang yang sama, setiap rush hour yang mendebarkan,
+    setiap momen kecil di antara kesibukan — semua itu menjadi
+    bagian dari cerita yang <em>tidak akan pernah terlupakan.</em>
+  </p>
+
+  <p class="story-line">
+    Bekerja bersama kalian bukan sekadar pekerjaan.
+    Itu adalah <em>persahabatan, pelajaran, dan perjalanan</em>
+    yang luar biasa.
+  </p>
+
+  <p class="story-line">
+    Terimakasih kepada para rekan crew,dan atasan,maupun tetangga disana yang telah mengisi waktu kerja yang membosankan ini, Menjadi lebih berwarna, Terutama <em>Bu siti, Pak Bayu, Ursula,Mas Nur, Rezi, Dimas, Randy, Dimas, Rizky, Fika</em>
+    yang luar biasa.
+  </p>
+
+  <p class="story-line large">
+    "Sampai jumpa di perjalanan berikutnya..."
+  </p>
+
+  <div class="gold-divider"></div>
+</section>
+
+
+<!-- =============================================
+     QUOTES SECTION
+============================================= -->
+<section id="quotes">
+
+  <div class="section-label">
+    <h2>Kata-kata yang Bermakna</h2>
+    <p>Untuk menemanimu di setiap langkah baru</p>
+  </div>
+
+  <div class="quote-card">
+    <span class="quote-mark">"</span>
+    <p class="quote-text">
+      Jangan menangisi apa yang telah berlalu. Tersenyumlah karena itu pernah terjadi.
+    </p>
+    <p class="quote-author">— Dr. Seuss</p>
+  </div>
+
+  <div class="quote-card">
+    <span class="quote-mark">"</span>
+    <p class="quote-text">
+      Setiap akhir adalah awal dari sesuatu yang lebih indah. Berani melangkah, dunia menunggumu.
+    </p>
+    <p class="quote-author">— C.S. Lewis</p>
+  </div>
+
+  <div class="quote-card">
+    <span class="quote-mark">"</span>
+    <p class="quote-text">
+      Orang-orang terhebat yang pernah kita temui adalah mereka yang hadir sepenuhnya
+      dalam setiap momen yang kita bagi bersama.
+    </p>
+    <p class="quote-author">— Maya Angelou</p>
+  </div>
+
+  <div class="quote-card">
+    <span class="quote-mark">"</span>
+    <p class="quote-text">
+      Perpisahan bukan akhir dari segalanya — ia adalah halaman baru
+      yang sedang menunggu ditulis oleh tangan-tangan yang penuh semangat.
+    </p>
+    <p class="quote-author">— Anonim</p>
+  </div>
+
+</section>
+
+
+<!-- =============================================
+     GALLERY SECTION
+============================================= -->
+<section id="gallery">
+
+  <div class="section-label">
+    <h2>Kenangan Bersama</h2>
+    <p>Setiap gambar menyimpan ribuan cerita</p>
+  </div>
+
+  <div class="gallery-grid">
+
+    <div class="gallery-card">
+      <img src="1.jpeg" alt="Tim kantor" loading="lazy" />
+      <span class="card-caption">✦ Bersama tim yang luar biasa</span>
+    </div>
+
+    <div class="gallery-card">
+      <img src="2.jpeg" alt="Suasana kantor" loading="lazy" />
+      <span class="card-caption">✦ Team Kokas yang inspiratif</span>
+    </div>
+
+    <div class="gallery-card">
+      <img src="3.jpeg" alt="Meeting seru" loading="lazy" />
+      <span class="card-caption">✦ Team New year 2026 yang sangat supportif</span>
+    </div>
+
+    <div class="gallery-card">
+      <img src="4.jpeg" alt="Kolaborasi tim" loading="lazy" />
+      <span class="card-caption">✦ Momen tak terlupakan</span>
+    </div>
+
+    <div class="gallery-card">
+      <img src="5.jpeg" alt="Momen bersama" loading="lazy" />
+      <span class="card-caption">✦ Kebersamaan saat sepi</span>
+    </div>
+
+    <div class="gallery-card">
+      <img src="6.jpeg" alt="Perayaan kantor" loading="lazy" />
+      <span class="card-caption">✦ Merayakan setiap pencapaian</span>
+    </div>
+
+  </div>
+</section>
+
+
+<!-- =============================================
+     FINAL MESSAGE SECTION
+============================================= -->
+<section id="finale">
+  <div class="finale-content">
+
+    <div class="finale-icon">🌟</div>
+
+    <h2 class="finale-heading">
+      Terima kasih,<br /><em>dari lubuk hati yang paling dalam.</em>
+    </h2>
+
+    <p class="finale-body">
+      Perjalanan ini mungkin sampai di titik persimpangan,<br />
+      namun kenangan yang tercipta akan selalu hidup.<br /><br />
+      Semoga jalan yang kamu pilih membawa kebahagiaan,<br />
+      kesuksesan, dan semua yang kamu impikan.<br /><br />
+      Kamu bukan sekadar rekan kerja —<br />
+      kamu adalah bagian dari cerita hidup kami.
+    </p>
+
+    <div class="star-row">
+      <span>✦</span>
+      <span>✦</span>
+      <span>✦</span>
+    </div>
+
+    <p class="finale-sig">
+      "Bukan selamat tinggal, melainkan sampai jumpa lagi."
+    </p>
+
+  </div>
+</section>
+
+
+<!-- Separator -->
+<div class="sep">
+  <div class="sep-line"></div>
+  <div class="sep-dot"></div>
+  <div class="sep-line"></div>
+</div>
+
+
+<!-- =============================================
+     FOOTER
+============================================= -->
+<footer>
+  <p>Made with ♥ &nbsp;·&nbsp; A Farewell, Not Goodbye &nbsp;·&nbsp; 2026</p>
+</footer>
+
+
+<!-- =============================================
+     JAVASCRIPT
+============================================= -->
+<script>
+  /* -----------------------------------------------
+     1. MUSIC TOGGLE
+  ----------------------------------------------- */
+  const audio     = document.getElementById('bg-audio');
+  const btn       = document.getElementById('music-btn');
+  const icon      = document.getElementById('music-icon');
+  let   playing   = false;
+
+  // Try autoplay on first user interaction
+  document.addEventListener('click', () => {
+    if (!playing) {
+      audio.volume = 0.35;
+      audio.play().then(() => {
+        playing = true;
+        btn.classList.add('playing');
+        icon.textContent = '♫';
+      }).catch(() => {});
+    }
+  }, { once: true });
+
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (playing) {
+      audio.pause();
+      playing = false;
+      btn.classList.remove('playing');
+      icon.textContent = '♪';
+    } else {
+      audio.play().then(() => {
+        playing = true;
+        btn.classList.add('playing');
+        icon.textContent = '♫';
+      }).catch(() => {});
+    }
+  });
+
+
+  /* -----------------------------------------------
+     2. INTERSECTION OBSERVER — reveal on scroll
+  ----------------------------------------------- */
+  const revealTargets = document.querySelectorAll(
+    '.story-line, .gold-divider, .section-label, ' +
+    '.gallery-card, .quote-card, ' +
+    '.finale-icon, .finale-heading, .finale-body, .finale-sig, .star-row'
+  );
+
+  const observerOpts = {
+    root: null,
+    rootMargin: '0px 0px -60px 0px',
+    threshold: 0.12
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, i) => {
+      if (entry.isIntersecting) {
+        // Stagger gallery cards slightly
+        const el = entry.target;
+        const delay = el.classList.contains('gallery-card')
+          ? [...document.querySelectorAll('.gallery-card')].indexOf(el) * 80
+          : 0;
+
+        setTimeout(() => {
+          el.classList.add('visible');
+        }, delay);
+
+        observer.unobserve(el);
+      }
+    });
+  }, observerOpts);
+
+  revealTargets.forEach(el => observer.observe(el));
+
+
+  /* -----------------------------------------------
+     3. SMOOTH SCROLL for CTA button
+  ----------------------------------------------- */
+  document.querySelector('.hero-cta').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('story').scrollIntoView({ behavior: 'smooth' });
+  });
+
+
+  /* -----------------------------------------------
+     4. TYPING EFFECT for hero title  (subtle cursor blink)
+     Already done via CSS animation — no extra JS needed.
+  ----------------------------------------------- */
+
+</script>
+</body>
+</html>
